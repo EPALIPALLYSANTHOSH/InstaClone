@@ -37,19 +37,21 @@ The application allows users to create accounts, manage profiles, share image po
 ## Application Screenshots
 
 ### 1. Login Page
-![Login Page](docs/screenshots/login.jpeg)
+[![Login Page](docs/screenshots/login.jpeg)](docs/screenshots/login.jpeg)
 
 ### 2. Home Feed
-![Home Feed](docs/screenshots/home-feed.jpeg)
+[![Home Feed](docs/screenshots/home-feed.jpeg)](docs/screenshots/home-feed.jpeg)
 
 ### 3. User Profile
-![User Profile](docs/screenshots/profile.jpeg)
+[![User Profile](docs/screenshots/profile.jpeg)](docs/screenshots/profile.jpeg)
 
 ### 4. Create Post
-![Create Post](docs/screenshots/create-post.jpeg)
+[![Create Post](docs/screenshots/create-post.jpeg)](docs/screenshots/create-post.jpeg)
 
 ### 5. Social Interactions
-![Social Interactions](docs/screenshots/interactions.jpeg)
+[![Social Interactions](docs/screenshots/interactions.jpeg)](docs/screenshots/interactions.jpeg)
+
+
 
 ## Architecture
 
