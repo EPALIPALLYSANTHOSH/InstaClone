@@ -215,3 +215,8 @@ Testing
  - Create a second account, search for the first user, and follow them.
  - Verify the feed accurately populates posts from followed users.
  - Like and comment on a post to trigger SNS notifications.
+
+## Live Demo
+
+🚀 [Visit InstaClone](http://www.santhosh-cloud.tech)
+
