@@ -1,222 +1,426 @@
 # InstaClone — Instagram-Like Serverless Social Media Application
 
 ## Project Overview
-InstaClone is a full-stack, serverless social media application inspired by Instagram. Built entirely on AWS, this Capstone project demonstrates a practical implementation of cloud-native architecture, serverless computing, NoSQL database design, secure storage, authentication, and RESTful API development.
+
+InstaClone is a full-stack, serverless social media application inspired by Instagram. Built using AWS services, this Capstone project demonstrates a practical implementation of cloud-native architecture, serverless computing, NoSQL database design, secure storage, authentication, and RESTful API development.
+
+The application allows users to create accounts, manage profiles, share image posts, follow other users, interact with posts, and receive notifications.
 
 ## Key Features
-* User Authentication: Secure signup and login using JWT authentication.
-* User Profiles: Customizable profiles featuring a bio, avatar, and follower/following counts.
-* Content Creation: Create posts with image uploads securely handled via S3 pre-signed URLs.
-* Personalized Feed: Dynamically generated home feed displaying posts from followed users.
-* Social Interactions: Like and unlike posts, and leave comments on posts.
-* Follow System: Follow and unfollow other users.
-* User Search: Search for users by username or full name.
-* Event Notifications: Asynchronous SNS notifications triggered for likes, comments, and follows.
+
+- **User Authentication:** Secure signup and login using JWT authentication.
+- **User Profiles:** Customizable profiles featuring a bio, avatar, and follower/following counts.
+- **Content Creation:** Create posts with image uploads securely handled via S3 pre-signed URLs.
+- **Personalized Feed:** Dynamically generated home feed displaying posts from followed users.
+- **Social Interactions:** Like, unlike, and comment on posts.
+- **Follow System:** Follow and unfollow other users.
+- **User Search:** Search for users by username or full name.
+- **Event Notifications:** SNS notifications triggered for likes, comments, and follows.
 
 ## AWS Services Used
-| AWS Service | Purpose |
 
-| Amazon S3 | Hosts the static frontend application and stores user-uploaded images. |
-| Amazon API Gateway| Provides a secure REST API routing client requests to Lambda functions. |
-| AWS Lambda | Executes serverless Node.js backend logic without provisioning servers. |
-| Amazon DynamoDB | Highly scalable NoSQL database storing users, posts, and social graphs. |
-| Amazon SNS | Manages publish/subscribe event notifications for social interactions. |
-| Amazon CloudWatch | Monitors application health and stores execution logs for Lambda functions. |
-| Amazon Route 53 | Manages DNS routing and custom domain configuration (optional). |
-| Amazon VPC | Provides an isolated network environment for secure backend execution (optional). |
+| AWS Service        | Purpose                                                                    |
+| ------------------ | -------------------------------------------------------------------------- |
+| Amazon S3          | Hosts the static frontend application and stores user-uploaded images.     |
+| Amazon API Gateway | Provides REST API routing for client requests to Lambda functions.         |
+| AWS Lambda         | Executes serverless Node.js backend logic without provisioning servers.    |
+| Amazon DynamoDB    | Stores users, posts, likes, comments, and follow relationships.            |
+| Amazon SNS         | Manages publish/subscribe notifications for social interactions.           |
+| Amazon CloudWatch  | Monitors application health and stores Lambda execution logs.              |
+| Amazon Route 53    | Manages DNS routing and custom domain configuration (optional).            |
+| Amazon VPC         | Provides an isolated network environment for backend execution (optional). |
+
+## Live Demo
+
+🚀 **[Visit InstaClone](http://www.santhosh-cloud.tech)**
+
+## Application Screenshots
+
+### 1. Login Page
+![Login Page](docs/screenshots/login.png)
+
+### 2. Home Feed
+![Home Feed](docs/screenshots/home-feed.png)
+
+### 3. User Profile
+![User Profile](docs/screenshots/profile.png)
+
+### 4. Create Post
+![Create Post](docs/screenshots/create-post.png)
+
+### 5. Social Interactions
+![Social Interactions](docs/screenshots/interactions.png)
 
 ## Architecture
-The application follows a decoupled, event-driven serverless architecture:
-1. **Client** requests the frontend application hosted on a public **S3 bucket**.
-2. The frontend communicates with the backend via **API Gateway (REST API)**.
-3. API Gateway routes requests to specific **Lambda functions** for processing.
-4. Lambda functions interact with **DynamoDB** for CRUD operations on application data.
-5. For image uploads, Lambda generates a pre-signed URL, allowing the client to upload directly to a secure **S3 bucket**.
-6. Social interactions trigger events published to **SNS** for asynchronous notifications.
+
+The application follows a decoupled, event-driven serverless architecture.
+
+1. The client requests the frontend application hosted on an Amazon S3 bucket.
+2. The frontend communicates with the backend through Amazon API Gateway (REST API).
+3. API Gateway routes requests to specific AWS Lambda functions.
+4. Lambda functions interact with DynamoDB for database operations.
+5. For image uploads, Lambda generates a pre-signed URL, allowing the client to upload images directly to Amazon S3.
+6. Social interactions trigger events published to Amazon SNS for asynchronous notifications.
 
 ### Architecture Diagram
+
 ```mermaid
 graph TD
-    %% User & Client
     Client((Browser / Client))
-    %% Frontend Hosting
+
     subgraph Frontend
-        S3_UI[Amazon S3<br>Static Website Hosting]
+        S3_UI[Amazon S3 - Static Website Hosting]
     end
-    %% API Layer
-    subgraph API Layer
-        APIGW[Amazon API Gateway<br>REST API]
+
+    subgraph API_Layer
+        APIGW[Amazon API Gateway - REST API]
     end
-    %% Compute Layer
-    subgraph Compute Layer
+
+    subgraph Compute_Layer
         L_Auth[Lambda: insta-auth]
         L_Users[Lambda: insta-users]
         L_Posts[Lambda: insta-posts]
         L_Feed[Lambda: insta-feed]
         L_Inter[Lambda: insta-interactions]
     end
-    %% Storage & Database Layer
-    subgraph Database & Storage
-        DDB[(Amazon DynamoDB<br>5 Tables)]
-        S3_Images[Amazon S3<br>Image Bucket]
+
+    subgraph Database_Storage
+        DDB[(Amazon DynamoDB - 5 Tables)]
+        S3_Images[Amazon S3 - Image Bucket]
     end
-    %% Notification Layer
+
     subgraph Messaging
-        SNS((Amazon SNS<br>Notifications))
+        SNS((Amazon SNS - Notifications))
     end
-    %% Connections
-    Client -- "1. Loads UI" --> S3_UI
-    Client -- "2. API Requests (JWT)" --> APIGW
-    Client -- "4. Direct Image Upload (PUT)" --> S3_Images
+
+    Client --> S3_UI
+    Client --> APIGW
+    Client --> S3_Images
+
     APIGW --> L_Auth
     APIGW --> L_Users
     APIGW --> L_Posts
     APIGW --> L_Feed
     APIGW --> L_Inter
+
     L_Auth <--> DDB
     L_Users <--> DDB
     L_Posts <--> DDB
     L_Feed <--> DDB
     L_Inter <--> DDB
-    L_Posts -- "3. Generates Pre-signed URL" --> S3_Images
-    
-    L_Inter -- "5. Triggers Event" --> SNS
-    L_Users -- "5. Triggers Event" --> SNS
-    
-    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:black;
-    class S3_UI,APIGW,L_Auth,L_Users,L_Posts,L_Feed,L_Inter,DDB,S3_Images,SNS aws;
+
+    L_Posts --> S3_Images
+    L_Inter --> SNS
+    L_Users --> SNS
 ```
 
-
 ## Technology Stack
-| Category | Technology |
-| :--- | :--- |
-| **Frontend** | HTML5, CSS3, Vanilla JavaScript |
-| **Compute** | AWS Lambda (Node.js 24.x) |
-| **API Layer** | Amazon API Gateway (REST) |
-| **Database** | Amazon DynamoDB |
-| **Storage** | Amazon S3 |
-| **Messaging** | Amazon SNS |
+
+| Category        | Technology                      |
+| --------------- | ------------------------------- |
+| Frontend        | HTML5, CSS3, Vanilla JavaScript |
+| Backend Runtime | Node.js 24.x                    |
+| Compute         | AWS Lambda                      |
+| API Layer       | Amazon API Gateway (REST)       |
+| Database        | Amazon DynamoDB                 |
+| Storage         | Amazon S3                       |
+| Messaging       | Amazon SNS                      |
+| Monitoring      | Amazon CloudWatch               |
 
 ## Project Structure
+
 ```text
 InstaClone/
+│
 ├── backend/
-│   ├── functions/                   # Lambda function handlers
-│   │   ├── auth/                    # Signup & login (insta-auth)
-│   │   ├── users/                   # Profiles, follows & search (insta-users)
-│   │   ├── posts/                   # Post CRUD & S3 URLs (insta-posts)
-│   │   ├── feed/                    # Feed generation (insta-feed)
-│   │   └── interactions/            # Likes & comments (insta-interactions)
+│   ├── functions/
+│   │   ├── auth/
+│   │   │   ├── index.js
+│   │   │   ├── package.json
+│   │   │   └── utils/
+│   │   ├── users/
+│   │   │   ├── index.js
+│   │   │   ├── package.json
+│   │   │   └── utils/
+│   │   ├── posts/
+│   │   │   ├── index.js
+│   │   │   ├── package.json
+│   │   │   └── utils/
+│   │   ├── feed/
+│   │   │   ├── index.js
+│   │   │   ├── package.json
+│   │   │   └── utils/
+│   │   └── interactions/
 │   │       ├── index.js
 │   │       ├── package.json
-│   │       └── utils/               # Shared utils (auth, dynamodb, response)
+│   │       └── utils/
+│   │
 │   └── schema/
-│       └── tables.json              # DynamoDB table definitions
+│       └── tables.json
+│
 └── frontend/
-    ├── index.html                   # Feed (home page)
-    ├── login.html                   # Login
-    ├── signup.html                  # Sign up
-    ├── profile.html                 # User profile
-    ├── create.html                  # Create post
-    ├── post.html                    # Single post view
+    ├── index.html
+    ├── login.html
+    ├── signup.html
+    ├── profile.html
+    ├── create.html
+    ├── post.html
+    │
     ├── css/
-    │   └── style.css                # Global styles
+    │   └── style.css
+    │
     └── js/
-        ├── config.js                # API Gateway URL config
-        ├── api.js                   # API client
-        ├── auth.js                  # Auth state management
-        └── ...                      # Page-specific logic scripts
+        ├── config.js
+        ├── api.js
+        ├── auth.js
+        └── ...
+```
 
-Backend Architecture :
-The backend is composed of five distinct, self-contained AWS Lambda functions. Each function handles a specific microservice domain (Auth, Users, Posts, Feed, Interactions) and includes its own bundled utilities and node_modules dependencies to keep package sizes optimized. API Gateway routes HTTP requests to the appropriate Lambda function, which verifies JWT authorization, performs DynamoDB transactions, and manages S3/SNS integrations.
+### Backend Architecture
 
-Frontend :
-The frontend is a lightweight Single Page Application (SPA) built with HTML, CSS, and Vanilla JavaScript. It is hosted as a static website on Amazon S3. The application manages state locally, stores JWT tokens securely, and dynamically renders the UI by communicating with API Gateway using the Fetch API.
+The backend consists of five separate AWS Lambda functions. Each function handles a specific application domain.
 
-Database Design :
-The application utilizes Amazon DynamoDB with a single-table or optimized multi-table design. Below are the 5 core tables:
+| Lambda Function    | Responsibility                             |
+| ------------------ | ------------------------------------------ |
+| insta-auth         | User registration and login                |
+| insta-users        | User profiles, follow/unfollow, and search |
+| insta-posts        | Post management and S3 pre-signed URLs     |
+| insta-feed         | Personalized feed generation               |
+| insta-interactions | Likes and comments                         |
 
-Table	Partition Key	Sort Key	GSIs (Global Secondary Indexes)
-InstaUsers	userId (S)	—	email-index, username-index
-InstaPosts	postId (S)	—	userId-createdAt-index
-InstaLikes	postId (S)	userId (S)	—
-InstaComments	postId (S)	commentId (S)	—
-InstaFollows	followerId (S)	followingId (S)	followingId-followerId-index
-API Documentation
-The API Gateway exposes a RESTful interface mapped to the Lambda microservices:
+Each function includes its own utilities and dependencies. API Gateway routes HTTP requests to the appropriate Lambda function, which processes requests, validates JWT authorization where required, and interacts with DynamoDB, S3, and SNS.
 
-Method	Endpoint	Purpose	Lambda Function
-POST	/api/auth/signup	Register a new user	insta-auth
-POST	/api/auth/login	Authenticate user & issue JWT	insta-auth
-GET	/api/users/search	Search users by name/username	insta-users
-GET/PUT	/api/users/{id}	Get or update user profile	insta-users
-POST/DEL	/api/users/{id}/follow	Follow or unfollow a user	insta-users
-GET	/api/users/{id}/followers	List user's followers	insta-users
-GET	/api/users/{id}/following	List users the user follows	insta-users
-GET	/api/users/{id}/posts	Fetch a user's posts	insta-posts
-GET	/api/posts/upload-url	Generate S3 pre-signed upload URL	insta-posts
-POST	/api/posts	Create a new post record	insta-posts
-GET/DEL	/api/posts/{id}	Retrieve or delete a post	insta-posts
-POST/DEL	/api/posts/{id}/like	Like or unlike a post	insta-interactions
-GET/POST	/api/posts/{id}/comments	Fetch or add a comment	insta-interactions
-DELETE	/api/comments/{id}	Delete a specific comment	insta-interactions
-GET	/api/feed	Retrieve personalized user feed	insta-feed
+### Frontend
 
-S3 Configuration :
-Frontend Hosting Bucket: Configured for static website hosting with a bucket policy allowing public read access (s3:GetObject).
-Image Storage Bucket: Secured bucket for user uploads. CORS is explicitly configured to allow PUT and GET methods from the frontend domain to facilitate direct pre-signed URL uploads.
+The frontend is built using HTML, CSS, and Vanilla JavaScript.
 
-Lambda Deployment
-Runtime: Node.js 24.x
-Timeout: 30 seconds
-Packaging: Each function is zipped individually with its index.js, utils/, and node_modules/.
-Environment Variables
-Example configuration (Do not commit real secrets to GitHub):
-env
-JWT_SECRET=your-secret-key-change-this
-S3_BUCKET_IMAGES=your-images-bucket-name
-S3_REGION=us-east-1
-SNS_TOPIC_ARN=arn:aws:sns:us-east-1:ACCOUNT_ID:insta-notifications
-DYNAMODB_REGION=us-east-1
-API Gateway Configuration
-Type: REST API
-CORS: Enabled on all resources with an OPTIONS method using Mock integration for preflight requests.
-Stage: Deployed to a production stage (e.g., prod).
-Authentication & Security
-JWT Authentication: The insta-auth Lambda verifies credentials and issues signed JSON Web Tokens (JWT). Subsequent requests to protected routes validate this token.
-Direct-to-S3 Uploads: Image uploads bypass the API/Lambda bottlenecks using secure S3 Pre-Signed URLs with strict expiration times.
+It is hosted as a static website on Amazon S3. The application manages user authentication state and dynamically renders the interface by communicating with API Gateway using the Fetch API.
 
-IAM Permissions :
-Lambda execution roles are strictly bound by the principle of least privilege, requiring:
-DynamoDB: Read/Write access strictly to Insta* tables.
-S3: PutObject and GetObject on the images bucket only.
-SNS: Publish permission to the specific insta-notifications topic.
-CloudWatch: Standard permissions to create log groups and streams.
+Main frontend pages:
 
-SNS Notifications :
-An SNS topic (insta-notifications) routes events via email/SMS subscriptions. It is asynchronously invoked by Lambda when:
-A user receives a new follower.
-A user's post receives a like.
-A user's post receives a new comment.
+- Home Feed
+- Login
+- Signup
+- User Profile
+- Create Post
 
-AWS Deployment Guide
-DynamoDB: Execute the definitions in backend/schema/tables.json to create the 5 tables with their respective GSIs.
-S3: Provision the frontend and image buckets. Apply CORS configuration to the images bucket.
-Lambda: Run npm install inside each of the 5 function folders, zip them, upload to AWS Lambda, and configure the environment variables & IAM roles.
-API Gateway: Create the REST routes, integrate them with the Lambda functions, enable CORS, and deploy the API.
-Frontend: Update frontend/js/config.js with your invoked API Gateway URL, then upload the frontend/ contents to your static S3 bucket.
+### Database Design
 
-Testing
- - Open the S3 static website URL in a browser.
- - Sign up for a new account & Login.
- - Create a post by successfully uploading an image to S3.
- - View the personalized home feed.
- - Create a second account, search for the first user, and follow them.
- - Verify the feed accurately populates posts from followed users.
- - Like and comment on a post to trigger SNS notifications.
+The application uses Amazon DynamoDB with five core tables.
 
-## Live Demo
+| Table         | Partition Key  | Sort Key        | Global Secondary Indexes     |
+| ------------- | -------------- | --------------- | ---------------------------- |
+| InstaUsers    | userId (S)     | —               | email-index, username-index  |
+| InstaPosts    | postId (S)     | —               | userId-createdAt-index       |
+| InstaLikes    | postId (S)     | userId (S)      | —                            |
+| InstaComments | postId (S)     | commentId (S)   | —                            |
+| InstaFollows  | followerId (S) | followingId (S) | followingId-followerId-index |
 
-[🚀 Visit InstaClone](http://www.santhosh-cloud.tech)
+Refer to `backend/schema/tables.json` for the table definitions.
+
+## API Documentation
+
+The application exposes RESTful API endpoints through Amazon API Gateway.
+
+| Method       | Endpoint                    | Purpose                           | Lambda Function    |
+| ------------ | --------------------------- | --------------------------------- | ------------------ |
+| POST         | `/api/auth/signup`          | Register a new user               | insta-auth         |
+| POST         | `/api/auth/login`           | Authenticate user and issue JWT   | insta-auth         |
+| GET          | `/api/users/search`         | Search users by name or username  | insta-users        |
+| GET, PUT     | `/api/users/{id}`           | Get or update user profile        | insta-users        |
+| POST, DELETE | `/api/users/{id}/follow`    | Follow or unfollow a user         | insta-users        |
+| GET          | `/api/users/{id}/followers` | List user's followers             | insta-users        |
+| GET          | `/api/users/{id}/following` | List users the user follows       | insta-users        |
+| GET          | `/api/users/{id}/posts`     | Fetch a user's posts              | insta-posts        |
+| GET          | `/api/posts/upload-url`     | Generate S3 pre-signed upload URL | insta-posts        |
+| POST         | `/api/posts`                | Create a new post                 | insta-posts        |
+| GET, DELETE  | `/api/posts/{id}`           | Retrieve or delete a post         | insta-posts        |
+| POST, DELETE | `/api/posts/{id}/like`      | Like or unlike a post             | insta-interactions |
+| GET, POST    | `/api/posts/{id}/comments`  | Fetch or add a comment            | insta-interactions |
+| DELETE       | `/api/comments/{id}`        | Delete a specific comment         | insta-interactions |
+| GET          | `/api/feed`                 | Retrieve personalized user feed   | insta-feed         |
+
+## S3 Configuration
+
+The application uses two Amazon S3 buckets.
+
+**1. Frontend Hosting Bucket**
+
+- Configured for static website hosting.
+- Stores frontend HTML, CSS, and JavaScript files.
+- Uses a bucket policy allowing public read access to website files, where required.
+
+**2. Image Storage Bucket**
+
+- Stores user-uploaded images.
+- Uses pre-signed URLs for direct image uploads.
+- CORS is configured to allow the required PUT and GET methods from the frontend domain.
+
+## Lambda Deployment
+
+The backend uses five AWS Lambda functions.
+
+| Configuration | Value                   |
+| ------------- | ----------------------- |
+| Runtime       | Node.js 24.x            |
+| Timeout       | 30 seconds              |
+| Handler       | index.handler           |
+| Packaging     | Individual ZIP packages |
+
+Each function is packaged with its `index.js`, `utils/`, and required `node_modules/` dependencies before uploading to AWS Lambda.
+
+### Environment Variables
+
+Example configuration:
+
+```env
+JWT_SECRET=<your-secret-key>
+S3_BUCKET_IMAGES=<your-images-bucket-name>
+S3_REGION=<your-aws-region>
+SNS_TOPIC_ARN=<your-sns-topic-arn>
+DYNAMODB_REGION=<your-aws-region>
+```
+
+**Security Note:** Never upload actual credentials, passwords, JWT secrets, or AWS access keys to GitHub.
+
+## API Gateway Configuration
+
+The application uses Amazon API Gateway REST API.
+
+- **API Type:** REST API
+- **Integration:** AWS Lambda functions
+- **CORS:** Enabled on the required resources.
+- **Preflight:** OPTIONS methods configured for CORS preflight requests.
+- **Deployment:** API deployed to a stage such as `prod`.
+
+## Authentication & Security
+
+### JWT Authentication
+
+The application uses JSON Web Tokens (JWT) for authentication.
+
+1. Users register or log in through the authentication API.
+2. The authentication Lambda validates credentials.
+3. A signed JWT is generated after successful authentication.
+4. Subsequent protected API requests include the JWT.
+5. Backend functions validate the token before processing authorized requests.
+
+### Direct-to-S3 Image Uploads
+
+The application uses S3 pre-signed URLs for image uploads.
+
+This allows the frontend to upload images directly to S3 without routing image data through Lambda, reducing unnecessary backend processing.
+
+## IAM Permissions
+
+Lambda execution roles require appropriate permissions based on the operations performed.
+
+- **DynamoDB:** Read and write access to the required InstaClone tables.
+- **S3:** PutObject and GetObject access to the image bucket.
+- **SNS:** Publish permission to the notifications topic.
+- **CloudWatch:** Permissions to create log groups and log streams and publish logs.
+
+IAM policies should follow the principle of least privilege.
+
+## SNS Notifications
+
+Amazon SNS is used to manage application event notifications.
+
+Notifications are triggered by Lambda functions when:
+
+- A user receives a new follower.
+- A user's post receives a like.
+- A user's post receives a new comment.
+
+SNS supports publish/subscribe communication and can deliver notifications through configured subscriptions such as email or SMS.
+
+## AWS Deployment Guide
+
+The following steps describe the main deployment process.
+
+**1. DynamoDB**
+
+Use the definitions in `backend/schema/tables.json` to create the five DynamoDB tables with their required keys and GSIs.
+
+**2. Amazon S3**
+
+- Create the frontend and image storage buckets.
+- Enable static website hosting on the frontend bucket.
+- Configure the required CORS settings on the image bucket.
+
+**3. AWS Lambda**
+
+- Run `npm install` inside each Lambda function folder.
+- Package each function individually.
+- Upload the ZIP files to AWS Lambda.
+- Configure environment variables and IAM roles.
+
+**4. API Gateway**
+
+- Create a REST API.
+- Configure the required API resources and methods.
+- Integrate the routes with the appropriate Lambda functions.
+- Enable CORS.
+- Deploy the API to a stage.
+
+**5. Frontend**
+
+Update `frontend/js/config.js` with your deployed API Gateway URL.
+
+```javascript
+const API_BASE_URL = 'YOUR_API_GATEWAY_URL';
+```
+
+Upload the frontend files to the S3 static website hosting bucket.
+
+**6. SNS**
+
+Create the `insta-notifications` SNS topic and configure the required subscriptions.
+
+**7. Route 53 **
+
+Configure a custom domain and DNS records using a custom domain.
+
+## Testing
+
+The following checklist can be used to verify the application's core functionality.
+
+-  Open the S3 static website URL in a browser.
+-  Sign up for a new account.
+-  Log in using registered credentials.
+-  Create a post by uploading an image to S3.
+-  View the personalized home feed.
+-  Create a second account.
+-  Search for the first user.
+-  Follow the first user.
+-  Verify that the feed displays posts from followed users.
+-  Like and comment on a post.
+-  Verify SNS notifications.
+
+
+## Challenges & Learning Outcomes
+
+Through this project, I gained practical experience in:
+
+- Designing and implementing serverless AWS architecture.
+- Developing RESTful APIs using API Gateway and Lambda.
+- Managing application data using DynamoDB.
+- Implementing secure image uploads using S3 pre-signed URLs.
+- Implementing JWT-based authentication.
+- Integrating SNS for event notifications.
+- Configuring IAM permissions and AWS resources.
+- Deploying and managing cloud-based applications.
+- Using Git and GitHub for source code management.
+
+## Future Improvements
+
+Potential improvements for the application include:
+
+- Implementing CI/CD using GitHub Actions.
+- Automating infrastructure deployment using Terraform.
+- Improving application monitoring and logging.
+- Enhancing security and access control.
+- Optimizing frontend delivery using CloudFront.
+- Adding automated testing.
+- Introducing additional social media features.
 
